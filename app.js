@@ -64,7 +64,6 @@ app.post('/createlist', async(req, res) => {
     try{
         const form = formidable({ multiples: true });
     form.parse(req, async(err, fields, files) => {
-        var properties = JSON.parse(fields.properties[0])
         var map = {
             name: {
                 type: String,
@@ -82,6 +81,8 @@ app.post('/createlist', async(req, res) => {
                 default: true
             }
         }
+        if(fields.properties){
+            var properties = JSON.parse(fields.properties[0])
         for(var i=0; i<properties.length; i++){
             if(properties[i]['name']=='name' || properties[i]['name']=='email' || properties[i]['name']=='subscribed'){
                 res.send('Fields name, email, subscribed should not present in custom properties')
@@ -91,6 +92,7 @@ app.post('/createlist', async(req, res) => {
                 type: String,
                 default: properties[i]['default']
             }
+        }
         }
     
         try{
