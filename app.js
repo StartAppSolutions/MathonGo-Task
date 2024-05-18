@@ -101,7 +101,6 @@ app.post('/add', async(req, res) => {
             res.send('Mention the list name in title field')
         }
         const jsonArray= await csv({ignoreEmpty: true}).fromFile(files.data[0].filepath);
-        console.log(jsonArray)
         var f = mongoose.model(fields.title[0])
         var data = (await mongoose.model(fields.title[0]).find()).length
         f.insertMany(jsonArray, {ordered : false }).then(value  => {
@@ -186,14 +185,14 @@ app.post('/sendmails', async(req, res) => {
             text: "Hey "+data[u]['name']+", \n Thank you for signing up with your email"+data[u]['email']+". We have received your city as "+data[u]['city']+".\n Team MathonGo. \n \n \n To unsubscribe, click on https://mathongo-task-2lfe.onrender.com/unsubscribe?title="+fields.title[0]+"&email="+data[u]['email'],
           });
     }
-    res.send('Mail send to add users.')
+    res.send('Mail send to all users.')
     });
     }catch(e){
         res.send(e.message)
     }
 })
 
-app.post('/unsubscribe', async(req, res) => {
+app.get('/unsubscribe', async(req, res) => {
     try{
         var title = req.params.title;
         var email = req.params.email;
