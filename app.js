@@ -194,8 +194,8 @@ app.post('/sendmails', async(req, res) => {
 
 app.get('/unsubscribe', async(req, res) => {
     try{
-        var title = req.params.title;
-        var email = req.params.email;
+        var title = req.query.title;
+        var email = req.query.email;
         var data = await mongoose.model(title).updateOne({email: email}, {$set: {subscribed: false}})
         console.log(data)
         res.send('Unsubscribed')
