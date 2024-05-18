@@ -31,21 +31,33 @@ app.post('/add', async(req, res) => {
     try{
         const form = formidable({ multiples: true });
     form.parse(req, async(err, fields, files) => {
-        const jsonArray= await csv({ignoreEmpty: true}).fromFile(files.cat[0].filepath);
+        if(!files.data){
+            res.send('Send a CSV file in field data')
+            return
+        }
+        if(!fields.title){
+            res.send('Mention the list name in title field')
+        }
+        const jsonArray= await csv({ignoreEmpty: true}).fromFile(files.data[0].filepath);
         console.log(jsonArray)
         var f = mongoose.model(fields.title[0])
-        f.insertMany(jsonArray, {ordered : false }).then(value => {
-            res.send('All user added')
-        }).catch(err=>{
+        var data = (await mongoose.model(fields.title[0]).find()).length
+        f.insertMany(jsonArray, {ordered : false }).then(value  => {
+            res.send('All user added. Current list count: '+(data+jsonArray.length))
+        }).catch(err => {
+            
             var faileditems = [];
             err.writeErrors.forEach(item => {
                 faileditems.push(item.err.op)
             })
             res.send({
-                givenjson: jsonArray,
+                currentlistcount: data+err.result.insertedCount,
                 insertcount: err.result.insertedCount,
+                errorinsertcount: err.writeErrors.length,
                 itemsnotadded: faileditems,
-                errorinsertcount: err.writeErrors.length
+                givencsvdata: jsonArray,
+                
+                
             })
         })
     });
@@ -96,6 +108,10 @@ app.post('/createlist', async(req, res) => {
         }
     
         try{
+            if(!fields.title){
+                res.send('Please mention the title')
+                return
+            }
             const mageSchema = new mongoose.Schema(map, {collection: fields.title[0]})
         const Mage = new mongoose.model(fields.title[0], mageSchema)
         res.send('List created')
