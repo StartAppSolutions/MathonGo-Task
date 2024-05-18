@@ -182,7 +182,7 @@ app.post('/sendmails', async(req, res) => {
             from: 'testmathgo@gmail.com',
             to: data[u]['email'],
             subject: "Welcome Message",
-            text: "Hey "+data[u]['name']+", \n Thank you for signing up with your email"+data[u]['email']+". We have received your city as "+data[u]['city']+".\n Team MathonGo. \n \n \n To unsubscribe, click on https://mathongo-task-2lfe.onrender.com/unsubscribe?title="+encodeURIComponent(fields.title[0].trim())+"&email="+data[u]['email'],
+            text: "Hey "+data[u]['name']+", \n Thank you for signing up with your email "+data[u]['email']+". We have received your city as "+data[u]['city']+".\n Team MathonGo. \n \n \n To unsubscribe, click on https://mathongo-task-2lfe.onrender.com/unsubscribe?title="+encodeURIComponent(fields.title[0].trim())+"&email="+data[u]['email'],
           });
     }
     res.send('Mail send to all users.')
@@ -197,7 +197,6 @@ app.get('/unsubscribe', async(req, res) => {
         var title = req.query.title;
         var email = req.query.email;
         var data = await mongoose.model(title).updateOne({email: email}, {$set: {subscribed: false}})
-        console.log(data)
         res.send('Unsubscribed')
     }catch(e){
         res.send(e.message)
