@@ -27,51 +27,7 @@ const transporter = nodemailer.createTransport({
     },
   });
 
-app.post('/add', async(req, res) => {
-    try{
-        const form = formidable({ multiples: true });
-    form.parse(req, async(err, fields, files) => {
-        if(!files.data){
-            res.send('Send a CSV file in field data')
-            return
-        }
-        if(!fields.title){
-            res.send('Mention the list name in title field')
-        }
-        const jsonArray= await csv({ignoreEmpty: true}).fromFile(files.data[0].filepath);
-        console.log(jsonArray)
-        var f = mongoose.model(fields.title[0])
-        var data = (await mongoose.model(fields.title[0]).find()).length
-        f.insertMany(jsonArray, {ordered : false }).then(value  => {
-            res.send('All user added. Current list count: '+(data+jsonArray.length))
-        }).catch(err => {
-            
-            var faileditems = [];
-            err.writeErrors.forEach(item => {
-                faileditems.push(item.err.op)
-            })
-            res.send({
-                currentlistcount: data+err.result.insertedCount,
-                insertcount: err.result.insertedCount,
-                errorinsertcount: err.writeErrors.length,
-                itemsnotadded: faileditems,
-                givencsvdata: jsonArray,
-                
-                
-            })
-        })
-    });
-
-    }catch(e){
-        if(e.message.startsWith("Schema hasn't been registered for model")){
-            res.send('Title not exists')
-        }else{
-            res.send(e.message)
-        }
-    }
-})
-
-
+  
 app.post('/createlist', async(req, res) => {
     try{
         const form = formidable({ multiples: true });
@@ -133,22 +89,117 @@ app.post('/createlist', async(req, res) => {
     }
 })
 
+app.post('/add', async(req, res) => {
+    try{
+        const form = formidable({ multiples: true });
+    form.parse(req, async(err, fields, files) => {
+        if(!files.data){
+            res.send('Send a CSV file in field data')
+            return
+        }
+        if(!fields.title){
+            res.send('Mention the list name in title field')
+        }
+        const jsonArray= await csv({ignoreEmpty: true}).fromFile(files.data[0].filepath);
+        console.log(jsonArray)
+        var f = mongoose.model(fields.title[0])
+        var data = (await mongoose.model(fields.title[0]).find()).length
+        f.insertMany(jsonArray, {ordered : false }).then(value  => {
+            res.send('All user added. Current list count: '+(data+jsonArray.length))
+        }).catch(err => {
+            
+            var faileditems = [];
+            err.writeErrors.forEach(item => {
+                faileditems.push(item.err.op)
+            })
+            res.send({
+                currentlistcount: data+err.result.insertedCount,
+                insertcount: err.result.insertedCount,
+                errorinsertcount: err.writeErrors.length,
+                itemsnotadded: faileditems,
+                givencsvdata: jsonArray,
+                
+                
+            })
+        })
+    });
+
+    }catch(e){
+        if(e.message.startsWith("Schema hasn't been registered for model")){
+            res.send('Title not exists')
+        }else{
+            res.send(e.message)
+        }
+    }
+})
+
+app.get('/fetchuser', async(req, res) => {
+    try{
+        const form = formidable({ multiples: true });
+    form.parse(req, async(err, fields, files) => {
+        if(!fields.email){
+            res.send('Please mention email ID of user in email field')
+            return
+        }
+        if(!fields.title){
+            res.send('Please mention title of list in title field')
+            return
+        }
+        var data = await mongoose.model(fields.title[0]).find({email: fields.email[0]})
+        res.send(data)
+    });
+    }catch(e){
+        res.send(e.message)
+    }
+})
+
+app.get('/fetchallusers', async(req, res) => {
+    try{
+        const form = formidable({ multiples: true });
+    form.parse(req, async(err, fields, files) => {
+        if(!fields.title){
+            res.send('Please mention title of list in title field')
+            return
+        }
+        var data = await mongoose.model(fields.title[0]).find()
+        res.send(data)
+    });
+    }catch(e){
+        res.send(e.message)
+    }
+})
+
 app.post('/sendmails', async(req, res) => {
     try{
         const form = formidable({ multiples: true });
     form.parse(req, async(err, fields, files) => {
+        if(!fields.title){
+            res.send('Please mention the title to send emails')
+            return;
+        }
         var data = await mongoose.model(fields.title[0]).find({subscribed: true})
     for(var u=0; u<data.length; u++){
-        console.log(data[u]['email'])
         const info = await transporter.sendMail({
             from: 'testmathgo@gmail.com',
             to: data[u]['email'],
             subject: "Welcome Message",
-            text: "Hey "+data[u]['name']+", \n Thank you for signing up with your email"+data[u]['email']+". We have received your city as "+data[u]['city']+".\n Team MathonGo.",
+            text: "Hey "+data[u]['name']+", \n Thank you for signing up with your email"+data[u]['email']+". We have received your city as "+data[u]['city']+".\n Team MathonGo. \n \n \n To unsubscribe, click on https://mathongo-task-2lfe.onrender.com/unsubscribe?title="+fields.title[0]+"&email="+data[u]['email'],
           });
     }
-    res.send('completed')
+    res.send('Mail send to add users.')
     });
+    }catch(e){
+        res.send(e.message)
+    }
+})
+
+app.post('/unsubscribe', async(req, res) => {
+    try{
+        var title = req.params.title;
+        var email = req.params.email;
+        var data = await mongoose.model(title).updateOne({email: email}, {$set: {subscribed: false}})
+        console.log(data)
+        res.send('Unsubscribed')
     }catch(e){
         res.send(e.message)
     }
